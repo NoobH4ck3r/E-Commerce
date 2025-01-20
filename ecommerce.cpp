@@ -1,19 +1,11 @@
 #include <iostream>
 #include <sqlite3.h>
 #include <vector>
-#ifdef _WIN32
 #include <windows.h>
-#else
-#include <unistd.h>
-#endif
 using namespace std;
 
 void clearScreen() {
-#ifdef _WIN32
     system("cls");
-#else
-    cout << "\033[2J\033[1;1H";
-#endif
 }
 
 void adminPanel();
