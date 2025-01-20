@@ -1,7 +1,8 @@
 #include <iostream>
 #include <sqlite3.h>
 #include <vector>
-#include <windows.h>
+#include <string>
+#include <sstream>
 using namespace std;
 
 void clearScreen() {
@@ -105,11 +106,13 @@ void addItem() {
     getline(cin, name);
     cout << "Enter item price: ";
     cin >> price;
-    
+    cin.ignore(); // Add this line to ignore the newline character
     cout << "Enter item description: ";
     getline(cin, description);
 
-    string sql = "INSERT INTO ITEMS (NAME, PRICE, DESCRIPTION) VALUES ('" + name + "', " + to_string(price) + ", '" + description + "');";
+    stringstream ss;
+    ss << "INSERT INTO ITEMS (NAME, PRICE, DESCRIPTION) VALUES ('" << name << "', " << price << ", '" << description << "');";
+    string sql = ss.str();
     rc = sqlite3_exec(db, sql.c_str(), 0, 0, &errMsg);
     if (rc != SQLITE_OK) {
         cerr << "SQL error: " << errMsg << endl;
@@ -135,16 +138,18 @@ void editItem() {
     double price;
     cout << "Enter item ID to edit: ";
     cin >> id;
-    
+    cin.ignore(); // Add this line to ignore the newline character
     cout << "Enter new item name: ";
     getline(cin, name);
     cout << "Enter new item price: ";
     cin >> price;
-    
+    cin.ignore(); // Add this line to ignore the newline character
     cout << "Enter new item description: ";
     getline(cin, description);
 
-    string sql = "UPDATE ITEMS SET NAME = '" + name + "', PRICE = " + to_string(price) + ", DESCRIPTION = '" + description + "' WHERE ID = " + to_string(id) + ";";
+    stringstream ss;
+    ss << "UPDATE ITEMS SET NAME = '" << name << "', PRICE = " << price << ", DESCRIPTION = '" << description << "' WHERE ID = " << id << ";";
+    string sql = ss.str();
     rc = sqlite3_exec(db, sql.c_str(), 0, 0, &errMsg);
     if (rc != SQLITE_OK) {
         cerr << "SQL error: " << errMsg << endl;
@@ -170,7 +175,9 @@ void deleteItem() {
     cin >> id;
     
 
-    string sql = "DELETE FROM ITEMS WHERE ID = " + to_string(id) + ";";
+    stringstream ss;
+    ss << "DELETE FROM ITEMS WHERE ID = " << id << ";";
+    string sql = ss.str();
     rc = sqlite3_exec(db, sql.c_str(), 0, 0, &errMsg);
     if (rc != SQLITE_OK) {
         cerr << "SQL error: " << errMsg << endl;
@@ -264,6 +271,7 @@ void browseItems() {
             viewItemDescription(itemId);
         } else if (action == 2) {
             addToCart(itemId);
+            browseItems();
         } else {
             cout << "Invalid choice!\n";
         }
@@ -281,7 +289,9 @@ void viewItemDescription(int itemId) {
         return;
     }
 
-    string sql = "SELECT DESCRIPTION FROM ITEMS WHERE ID = " + to_string(itemId) + ";";
+    stringstream ss;
+    ss << "SELECT DESCRIPTION FROM ITEMS WHERE ID = " << itemId << ";";
+    string sql = ss.str();
     rc = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, 0);
 
     if (rc != SQLITE_OK) {
@@ -317,6 +327,9 @@ void viewCart() {
     clearScreen();
     if (cart.empty()) {
         cout << "Your cart is empty\n";
+        cout << "Press Enter to return to the User Panel...";
+        cin.ignore();
+        cin.get();
         return;
     }
 
@@ -331,8 +344,11 @@ void viewCart() {
 
     double total = 0;
     cout << "==================== Items in Your Cart ====================\n";
-    for (int itemId : cart) {
-        string sql = "SELECT NAME, PRICE FROM ITEMS WHERE ID = " + to_string(itemId) + ";";
+    for (size_t i = 0; i < cart.size(); ++i) { 
+        int itemId = cart[i];
+        stringstream ss;
+        ss << "SELECT NAME, PRICE FROM ITEMS WHERE ID = " << itemId << ";";
+        string sql = ss.str();
         rc = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, 0);
 
         if (rc != SQLITE_OK) {
@@ -390,6 +406,7 @@ void checkout() {
     cart.clear();
     cout << "Thank you for your purchase!\n";
     cout << "Press Enter to return to the User Panel...";
+    cin.ignore();
     cin.get();
     userPanel();
 }
