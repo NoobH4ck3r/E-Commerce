@@ -12,7 +12,7 @@ void clearScreen() {
 #ifdef _WIN32
     system("cls");
 #else
-    cout << "\033[2J\033[1;1H"; // ANSI escape code to clear the screen
+    cout << "\033[2J\033[1;1H";
 #endif
 }
 
@@ -77,7 +77,7 @@ void adminPanel() {
         cout << "=====================================================\n";
         cout << "Enter your choice: ";
         cin >> choice;
-        cin.ignore(); // Clear the input buffer
+        
 
         switch (choice) {
             case 1:
@@ -113,7 +113,7 @@ void addItem() {
     getline(cin, name);
     cout << "Enter item price: ";
     cin >> price;
-    cin.ignore(); // Clear the input buffer
+    
     cout << "Enter item description: ";
     getline(cin, description);
 
@@ -143,12 +143,12 @@ void editItem() {
     double price;
     cout << "Enter item ID to edit: ";
     cin >> id;
-    cin.ignore(); // Clear the input buffer
+    
     cout << "Enter new item name: ";
     getline(cin, name);
     cout << "Enter new item price: ";
     cin >> price;
-    cin.ignore(); // Clear the input buffer
+    
     cout << "Enter new item description: ";
     getline(cin, description);
 
@@ -176,7 +176,7 @@ void deleteItem() {
     int id;
     cout << "Enter item ID to delete: ";
     cin >> id;
-    cin.ignore(); // Clear the input buffer
+    
 
     string sql = "DELETE FROM ITEMS WHERE ID = " + to_string(id) + ";";
     rc = sqlite3_exec(db, sql.c_str(), 0, 0, &errMsg);
@@ -200,7 +200,7 @@ void userPanel() {
         cout << "Enter your choice (or type special word to access admin panel): ";
         string choice;
         cin >> choice;
-        cin.ignore(); // Clear the input buffer
+        
 
         if (choice == "1") {
             browseItems();
@@ -213,7 +213,7 @@ void userPanel() {
             string password;
             cout << "Enter admin password: ";
             cin >> password;
-            cin.ignore(); // Clear the input buffer
+            
             if (password == ADMIN_PASSWORD) {
                 adminPanel();
             } else {
@@ -260,14 +260,14 @@ void browseItems() {
     int itemId;
     cout << "Enter item ID to view description or add to cart (0 to exit): ";
     cin >> itemId;
-    cin.ignore(); // Clear the input buffer
+    
     if (itemId != 0) {
         int action;
         cout << "1. View Description\n";
         cout << "2. Add to Cart\n";
         cout << "Enter your choice: ";
         cin >> action;
-        cin.ignore(); // Clear the input buffer
+        
         if (action == 1) {
             viewItemDescription(itemId);
         } else if (action == 2) {
@@ -309,7 +309,7 @@ void viewItemDescription(int itemId) {
     int choice;
     cout << "Do you want to add this item to the cart? (1 for Yes, 0 for No): ";
     cin >> choice;
-    cin.ignore(); // Clear the input buffer
+    
     if (choice == 1) {
         addToCart(itemId);
     }
@@ -369,7 +369,7 @@ void viewCart() {
     cout << "2. Back to User Panel\n";
     cout << "Enter your choice: ";
     cin >> choice;
-    cin.ignore(); // Clear the input buffer
+    
     if (choice == 1) {
         checkout();
     }
@@ -385,7 +385,7 @@ void checkout() {
     int choice;
     cout << "Enter your choice: ";
     cin >> choice;
-    cin.ignore(); // Clear the input buffer
+    
 
     if (choice == 1) {
         cout << "Payment successful via Card!\n";
