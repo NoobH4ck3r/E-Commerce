@@ -85,7 +85,7 @@ void adminPanel() {
     int choice;
     while (true) {
         system("cls");
-        cout<<"==================== Admin Panel ====================\n"<< "1. Add Item\n"<< "2. Edit Item\n"<< "3. Delete Item\n"<< "4. Back to Main Menu\n"<< "=====================================================\n"<< "Enter your choice: ";
+        cout<<"==================== Admin Panel ====================\n"<<"1. Add Item\n"<<"2. Edit Item\n"<<"3. Delete Item\n"<<"4. Back to Main Menu\n"<<"=====================================================\n"<<"Enter your choice: ";
         cin>>choice;
         cin.ignore();
 
@@ -178,7 +178,7 @@ void deleteItem() {
 void userPanel() {
     while (true) {
         system("cls");
-        cout<<"==================== User Panel ====================\n"<< "1. Browse Items\n"<<"2. View Cart\n"<<"3. Exit\n"<<"====================================================\n"<<"Enter your choice (or type special word to access admin panel): ";
+        cout<<"==================== User Panel ====================\n"<<"1. Browse Items\n"<<"2. View Cart\n"<<"3. Exit\n"<<"====================================================\n"<<"Enter your choice (or type special word to access admin panel): ";
         string choice;
         cin>>choice;
         cin.ignore();
@@ -213,7 +213,7 @@ void browseItems() {
     loadItems();
     cout<<"==================== Available Items ====================\n";
     for (int i = 0; i < itemCount; ++i) {
-        cout<<"ID: "<<items[i].id << ", Name: "<<items[i].name<<", Price: "<<items[i].price<<"\n";
+        cout<<"ID: "<<items[i].id<<", Name: "<<items[i].name<<", Price: "<<items[i].price<<"\n";
     }
     cout<<"=========================================================\n";
 
@@ -271,7 +271,7 @@ void addToCart(int itemId) {
 void viewCart() {
     system("cls");
     if (cartSize == 0) {
-        cout<<"Your cart is empty\n"<< "Press Enter to return to the User Panel...";
+        cout<<"Your cart is empty\n"<<"Press Enter to return to the User Panel...";
         cin.ignore();
         cin.get();
         return;
@@ -279,20 +279,20 @@ void viewCart() {
 
     loadItems();
     double total = 0;
-    cout << "==================== Items in Your Cart ====================\n";
+    cout<<"==================== Items in Your Cart ====================\n";
     for (int i=0; i<cartSize; ++i) {
         for (int j=0; j<itemCount; ++j) {
             if (items[j].id == cart[i]) {
                 total += items[j].price;
-                cout<<"Name: "<< items[j].name<<", Price: "<<items[j].price<<"\n";
+                cout<<"Name: "<<items[j].name<<", Price: "<<items[j].price<<"\n";
                 break;
             }
         }
     }
-    cout<<"============================================================\n"<< "Total Amount: "<<total<<"\n"<<"============================================================\n";
+    cout<<"============================================================\n"<<"Total Amount: "<<total<<"\n"<<"============================================================\n";
 
     int choice;
-    cout<<"1. Checkout\n"<< "2. Back to User Panel\n"<< "Enter your choice: ";
+    cout<<"1. Checkout\n"<<"2. Back to User Panel\n"<<"Enter your choice: ";
     cin>>choice;
     cin.ignore();
 
@@ -303,7 +303,7 @@ void viewCart() {
 
 void checkout() {
     system("cls");
-    cout<<"==================== Checkout ====================\n"<< "Choose payment method:\n"<< "1. Card\n"<< "2. Cash on Delivery\n"<< "==================================================\n"<< "Enter your choice: ";
+    cout<<"==================== Checkout ====================\n"<<"Choose payment method:\n"<<"1. Card\n"<<"2. Cash on Delivery\n"<<"==================================================\n"<<"Enter your choice: ";
     int choice;
     cin>>choice;
     cin.ignore();
@@ -317,7 +317,7 @@ void checkout() {
     }
 
     cartSize = 0;
-    cout<<"Thank you for your purchase!\n"<< "Press Enter to return to the User Panel...";
+    cout<<"Thank you for your purchase!\n"<<"Press Enter to return to the User Panel...";
     cin.get();
     userPanel();
 }
