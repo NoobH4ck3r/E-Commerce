@@ -1,13 +1,8 @@
 #include <iostream>
-#include <sqlite3.h>
-#include <vector>
 #include <string>
-#include <sstream>
+#include <fstream>
 using namespace std;
 
-void clearScreen() {
-    system("cls");
-}
 
 void adminPanel();
 void addItem();
@@ -21,8 +16,19 @@ void viewCart();
 void checkout();
 void viewItemDescription(int itemId);
 
-vector<int> cart;
-const string ADMIN_PASSWORD = "admin123"; // Admin password
+
+
+struct Item {
+    int id;
+    string name;
+    double price;
+    string description;
+};
+
+Item items[100];
+int itemCount = 0;
+int cart[100];
+int cartSize = 0;
 
 int main() {
     initializeDatabase();
@@ -31,46 +37,57 @@ int main() {
 }
 
 void initializeDatabase() {
-    sqlite3 *db;
-    char *errMsg = 0;
-    int rc = sqlite3_open("ecommerce.db", &db);
-
-    if (rc) {
-        cerr << "Can't open database: " << sqlite3_errmsg(db) << endl;
-        return;
+    ifstream file("ecommerce.txt");
+    if (!file) {
+        ofstream outfile("ecommerce.txt");
+        outfile.close();
+        cout<<"Data file created successfully\n";
     } else {
-        cout << "Opened database successfully\n";
+        cout<<"Opened data file successfully\n";
     }
+    file.close();
+}
 
-    const char *sql = "CREATE TABLE IF NOT EXISTS ITEMS("
-                      "ID INTEGER PRIMARY KEY AUTOINCREMENT,"
-                      "NAME TEXT NOT NULL,"
-                      "PRICE REAL,"
-                      "DESCRIPTION TEXT);";
+void loadItems() {
+    ifstream file("ecommerce.txt");
+    if (file) {
+        itemCount = 0;
+        string line;
+        while (getline(file, line)) {
+            itemCount++;
+        }
+        itemCount /= 4;
 
-    rc = sqlite3_exec(db, sql, 0, 0, &errMsg);
-    if (rc != SQLITE_OK) {
-        cerr << "SQL error: " << errMsg << endl;
-        sqlite3_free(errMsg);
-    } else {
-        cout << "Table created successfully\n";
+        file.clear();
+        file.seekg(0, ios::beg);
+
+        for (int i = 0; i < itemCount; ++i) {
+            file>>items[i].id;
+            file.ignore();
+            getline(file, items[i].name);
+            file>>items[i].price;
+            file.ignore();
+            getline(file, items[i].description);
+        }
     }
-    sqlite3_close(db);
+    file.close();
+}
+
+void saveItems() {
+    ofstream file("ecommerce.txt");
+    for (int i = 0; i < itemCount; ++i) {
+        file<<items[i].id<<'\n'<<items[i].name<<'\n'<<items[i].price<<'\n'<<items[i].description<<'\n';
+    }
+    file.close();
 }
 
 void adminPanel() {
     int choice;
     while (true) {
-        clearScreen();
-        cout << "==================== Admin Panel ====================\n";
-        cout << "1. Add Item\n";
-        cout << "2. Edit Item\n";
-        cout << "3. Delete Item\n";
-        cout << "4. Back to Main Menu\n";
-        cout << "=====================================================\n";
-        cout << "Enter your choice: ";
-        cin >> choice;
-        
+        system("cls");
+        cout<<"==================== Admin Panel ====================\n"<< "1. Add Item\n"<< "2. Edit Item\n"<< "3. Delete Item\n"<< "4. Back to Main Menu\n"<< "=====================================================\n"<< "Enter your choice: ";
+        cin>>choice;
+        cin.ignore();
 
         switch (choice) {
             case 1:
@@ -85,328 +102,222 @@ void adminPanel() {
             case 4:
                 return;
             default:
-                cout << "Invalid choice!\n";
+                cout<<"Invalid choice!\n";
         }
     }
 }
 
 void addItem() {
-    sqlite3 *db;
-    char *errMsg = 0;
-    int rc = sqlite3_open("ecommerce.db", &db);
+    loadItems();
+    if (itemCount < 100) {
+        if (itemCount == 0) {
+            items[itemCount].id = 1;
+        } else {
+            items[itemCount].id = items[itemCount - 1].id + 1;
+        }
+        cout<<"Enter item name: ";
+        getline(cin, items[itemCount].name);
+        cout<<"Enter item price: ";
+        cin>>items[itemCount].price;
+        cin.ignore();
+        cout<<"Enter item description: ";
+        getline(cin, items[itemCount].description);
 
-    if (rc) {
-        cerr << "Can't open database: " << sqlite3_errmsg(db) << endl;
-        return;
-    }
-
-    string name, description;
-    double price;
-    cout << "Enter item name: ";
-    getline(cin, name);
-    cout << "Enter item price: ";
-    cin >> price;
-    cin.ignore(); // Add this line to ignore the newline character
-    cout << "Enter item description: ";
-    getline(cin, description);
-
-    stringstream ss;
-    ss << "INSERT INTO ITEMS (NAME, PRICE, DESCRIPTION) VALUES ('" << name << "', " << price << ", '" << description << "');";
-    string sql = ss.str();
-    rc = sqlite3_exec(db, sql.c_str(), 0, 0, &errMsg);
-    if (rc != SQLITE_OK) {
-        cerr << "SQL error: " << errMsg << endl;
-        sqlite3_free(errMsg);
+        itemCount++;
+        saveItems();
+        cout<<"Item added successfully\n";
     } else {
-        cout << "Item added successfully\n";
+        cout<<"Item list is full\n";
     }
-    sqlite3_close(db);
 }
 
 void editItem() {
-    sqlite3 *db;
-    char *errMsg = 0;
-    int rc = sqlite3_open("ecommerce.db", &db);
-
-    if (rc) {
-        cerr << "Can't open database: " << sqlite3_errmsg(db) << endl;
-        return;
-    }
-
+    loadItems();
     int id;
-    string name, description;
-    double price;
-    cout << "Enter item ID to edit: ";
-    cin >> id;
-    cin.ignore(); // Add this line to ignore the newline character
-    cout << "Enter new item name: ";
-    getline(cin, name);
-    cout << "Enter new item price: ";
-    cin >> price;
-    cin.ignore(); // Add this line to ignore the newline character
-    cout << "Enter new item description: ";
-    getline(cin, description);
+    cout<<"Enter item ID to edit: ";
+    cin>>id;
+    cin.ignore();
 
-    stringstream ss;
-    ss << "UPDATE ITEMS SET NAME = '" << name << "', PRICE = " << price << ", DESCRIPTION = '" << description << "' WHERE ID = " << id << ";";
-    string sql = ss.str();
-    rc = sqlite3_exec(db, sql.c_str(), 0, 0, &errMsg);
-    if (rc != SQLITE_OK) {
-        cerr << "SQL error: " << errMsg << endl;
-        sqlite3_free(errMsg);
-    } else {
-        cout << "Item updated successfully\n";
+    for (int i = 0; i < itemCount; ++i) {
+        if (items[i].id == id) {
+            cout<<"Enter new item name: ";
+            getline(cin, items[i].name);
+            cout<<"Enter new item price: ";
+            cin>>items[i].price;
+            cin.ignore();
+            cout<<"Enter new item description: ";
+            getline(cin, items[i].description);
+
+            saveItems();
+            cout<<"Item updated successfully\n";
+            return;
+        }
     }
-    sqlite3_close(db);
+    cout<<"Item not found\n";
 }
 
 void deleteItem() {
-    sqlite3 *db;
-    char *errMsg = 0;
-    int rc = sqlite3_open("ecommerce.db", &db);
-
-    if (rc) {
-        cerr << "Can't open database: " << sqlite3_errmsg(db) << endl;
-        return;
-    }
-
+    loadItems();
     int id;
-    cout << "Enter item ID to delete: ";
-    cin >> id;
-    
+    cout<<"Enter item ID to delete: ";
+    cin>>id;
+    cin.ignore();
 
-    stringstream ss;
-    ss << "DELETE FROM ITEMS WHERE ID = " << id << ";";
-    string sql = ss.str();
-    rc = sqlite3_exec(db, sql.c_str(), 0, 0, &errMsg);
-    if (rc != SQLITE_OK) {
-        cerr << "SQL error: " << errMsg << endl;
-        sqlite3_free(errMsg);
-    } else {
-        cout << "Item deleted successfully\n";
+    int newCount = 0;
+    for (int i=0; i<itemCount; ++i) {
+        if (items[i].id != id) {
+            items[newCount++] = items[i];
+        }
     }
-    sqlite3_close(db);
+    itemCount = newCount;
+
+    saveItems();
+    cout<<"Item deleted successfully\n";
 }
 
 void userPanel() {
     while (true) {
-        clearScreen();
-        cout << "==================== User Panel ====================\n";
-        cout << "1. Browse Items\n";
-        cout << "2. View Cart\n";
-        cout << "3. Exit\n";
-        cout << "====================================================\n";
-        cout << "Enter your choice (or type special word to access admin panel): ";
+        system("cls");
+        cout<<"==================== User Panel ====================\n"<< "1. Browse Items\n"<<"2. View Cart\n"<<"3. Exit\n"<<"====================================================\n"<<"Enter your choice (or type special word to access admin panel): ";
         string choice;
-        cin >> choice;
-        
+        cin>>choice;
+        cin.ignore();
 
         if (choice == "1") {
             browseItems();
         } else if (choice == "2") {
             viewCart();
         } else if (choice == "3") {
-            cout << "Goodbye!\n";
+            cout<<"Goodbye!\n";
             return;
         } else if (choice == "admin") {
             string password;
-            cout << "Enter admin password: ";
-            cin >> password;
-            
-            if (password == ADMIN_PASSWORD) {
+            string adminpass = "admin123";
+            cout<<"Enter admin password: ";
+            cin>>password;
+            cin.ignore();
+
+            if (password == adminpass) {
                 adminPanel();
             } else {
-                cout << "Incorrect password!\n";
+                cout<<"Incorrect password!\n";
             }
         } else {
-            cout << "Invalid choice!\n";
+            cout<<"Invalid choice!\n";
         }
     }
 }
 
 void browseItems() {
-    clearScreen();
-    sqlite3 *db;
-    sqlite3_stmt *stmt;
-    int rc = sqlite3_open("ecommerce.db", &db);
-
-    if (rc) {
-        cerr << "Can't open database: " << sqlite3_errmsg(db) << endl;
-        return;
+    system("cls");
+    loadItems();
+    cout<<"==================== Available Items ====================\n";
+    for (int i = 0; i < itemCount; ++i) {
+        cout<<"ID: "<<items[i].id << ", Name: "<<items[i].name<<", Price: "<<items[i].price<<"\n";
     }
-
-    const char *sql = "SELECT ID, NAME, PRICE FROM ITEMS;";
-    rc = sqlite3_prepare_v2(db, sql, -1, &stmt, 0);
-
-    if (rc != SQLITE_OK) {
-        cerr << "Failed to fetch data: " << sqlite3_errmsg(db) << endl;
-        sqlite3_close(db);
-        return;
-    }
-
-    cout << "==================== Available Items ====================\n";
-    while (sqlite3_step(stmt) == SQLITE_ROW) {
-        int id = sqlite3_column_int(stmt, 0);
-        const unsigned char *name = sqlite3_column_text(stmt, 1);
-        double price = sqlite3_column_double(stmt, 2);
-        cout << "ID: " << id << ", Name: " << name << ", Price: " << price << "\n";
-    }
-    cout << "=========================================================\n";
-
-    sqlite3_finalize(stmt);
-    sqlite3_close(db);
+    cout<<"=========================================================\n";
 
     int itemId;
-    cout << "Enter item ID to view description or add to cart (0 to exit): ";
-    cin >> itemId;
-    
+    cout<<"Enter item ID to view description or add to cart (0 to exit): ";
+    cin>>itemId;
+    cin.ignore();
+
     if (itemId != 0) {
         int action;
-        cout << "1. View Description\n";
-        cout << "2. Add to Cart\n";
-        cout << "Enter your choice: ";
-        cin >> action;
-        
+        cout<<"1. View Description\n"<<"2. Add to Cart\n"<<"Enter your choice: ";
+        cin>>action;
+        cin.ignore();
+
         if (action == 1) {
             viewItemDescription(itemId);
         } else if (action == 2) {
             addToCart(itemId);
             browseItems();
         } else {
-            cout << "Invalid choice!\n";
+            cout<<"Invalid choice!\n";
         }
     }
 }
 
 void viewItemDescription(int itemId) {
-    clearScreen();
-    sqlite3 *db;
-    sqlite3_stmt *stmt;
-    int rc = sqlite3_open("ecommerce.db", &db);
-
-    if (rc) {
-        cerr << "Can't open database: " << sqlite3_errmsg(db) << endl;
-        return;
+    system("cls");
+    loadItems();
+    for (int i=0; i<itemCount; ++i) {
+        if (items[i].id == itemId) {
+            cout<<"Description: "<<items[i].description<<"\n";
+            break;
+        }
     }
-
-    stringstream ss;
-    ss << "SELECT DESCRIPTION FROM ITEMS WHERE ID = " << itemId << ";";
-    string sql = ss.str();
-    rc = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, 0);
-
-    if (rc != SQLITE_OK) {
-        cerr << "Failed to fetch data: " << sqlite3_errmsg(db) << endl;
-        sqlite3_close(db);
-        return;
-    }
-
-    if (sqlite3_step(stmt) == SQLITE_ROW) {
-        const unsigned char *description = sqlite3_column_text(stmt, 0);
-        cout << "Description: " << description << "\n";
-    }
-
-    sqlite3_finalize(stmt);
-    sqlite3_close(db);
 
     int choice;
-    cout << "Do you want to add this item to the cart? (1 for Yes, 0 for No): ";
-    cin >> choice;
-    
+    cout<<"Do you want to add this item to the cart? (1 for Yes, 0 for No): ";
+    cin>>choice;
+    cin.ignore();
     if (choice == 1) {
         addToCart(itemId);
     }
-    browseItems(); // Return to browse items menu
+    browseItems();
 }
 
 void addToCart(int itemId) {
-    cart.push_back(itemId);
-    cout << "Item added to cart\n";
+    if (cartSize < 100) {
+        cart[cartSize++] = itemId;
+        cout<<"Item added to cart\n";
+    } else {
+        cout<<"Cart is full\n";
+    }
 }
 
 void viewCart() {
-    clearScreen();
-    if (cart.empty()) {
-        cout << "Your cart is empty\n";
-        cout << "Press Enter to return to the User Panel...";
+    system("cls");
+    if (cartSize == 0) {
+        cout<<"Your cart is empty\n"<< "Press Enter to return to the User Panel...";
         cin.ignore();
         cin.get();
         return;
     }
 
-    sqlite3 *db;
-    sqlite3_stmt *stmt;
-    int rc = sqlite3_open("ecommerce.db", &db);
-
-    if (rc) {
-        cerr << "Can't open database: " << sqlite3_errmsg(db) << endl;
-        return;
-    }
-
+    loadItems();
     double total = 0;
     cout << "==================== Items in Your Cart ====================\n";
-    for (size_t i = 0; i < cart.size(); ++i) { 
-        int itemId = cart[i];
-        stringstream ss;
-        ss << "SELECT NAME, PRICE FROM ITEMS WHERE ID = " << itemId << ";";
-        string sql = ss.str();
-        rc = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, 0);
-
-        if (rc != SQLITE_OK) {
-            cerr << "Failed to fetch data: " << sqlite3_errmsg(db) << endl;
-            sqlite3_close(db);
-            return;
+    for (int i=0; i<cartSize; ++i) {
+        for (int j=0; j<itemCount; ++j) {
+            if (items[j].id == cart[i]) {
+                total += items[j].price;
+                cout<<"Name: "<< items[j].name<<", Price: "<<items[j].price<<"\n";
+                break;
+            }
         }
-
-        if (sqlite3_step(stmt) == SQLITE_ROW) {
-            const unsigned char *name = sqlite3_column_text(stmt, 0);
-            double price = sqlite3_column_double(stmt, 1);
-            total += price;
-            cout << "Name: " << name << ", Price: " << price << "\n";
-        }
-
-        sqlite3_finalize(stmt);
     }
-    cout << "============================================================\n";
-    cout << "Total Amount: " << total << "\n";
-    cout << "============================================================\n";
-
-    sqlite3_close(db);
+    cout<<"============================================================\n"<< "Total Amount: "<<total<<"\n"<<"============================================================\n";
 
     int choice;
-    cout << "1. Checkout\n";
-    cout << "2. Back to User Panel\n";
-    cout << "Enter your choice: ";
-    cin >> choice;
-    
+    cout<<"1. Checkout\n"<< "2. Back to User Panel\n"<< "Enter your choice: ";
+    cin>>choice;
+    cin.ignore();
+
     if (choice == 1) {
         checkout();
     }
 }
 
 void checkout() {
-    clearScreen();
-    cout << "==================== Checkout ====================\n";
-    cout << "Choose payment method:\n";
-    cout << "1. Card\n";
-    cout << "2. Cash on Delivery\n";
-    cout << "==================================================\n";
+    system("cls");
+    cout<<"==================== Checkout ====================\n"<< "Choose payment method:\n"<< "1. Card\n"<< "2. Cash on Delivery\n"<< "==================================================\n"<< "Enter your choice: ";
     int choice;
-    cout << "Enter your choice: ";
-    cin >> choice;
-    
+    cin>>choice;
+    cin.ignore();
 
     if (choice == 1) {
-        cout << "Payment successful via Card!\n";
+        cout<<"Payment successful via Card!\n";
     } else if (choice == 2) {
-        cout << "Payment will be made on delivery!\n";
+        cout<<"Payment will be made on delivery!\n";
     } else {
-        cout << "Invalid choice!\n";
+        cout<<"Invalid choice!\n";
     }
 
-    cart.clear();
-    cout << "Thank you for your purchase!\n";
-    cout << "Press Enter to return to the User Panel...";
-    cin.ignore();
+    cartSize = 0;
+    cout<<"Thank you for your purchase!\n"<< "Press Enter to return to the User Panel...";
     cin.get();
     userPanel();
 }
